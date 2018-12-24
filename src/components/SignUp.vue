@@ -52,8 +52,7 @@
     email,
     sameAs // eslint-disable-line
   } from 'vuelidate/lib/validators'
-  import firebase from 'firebase'
-  // import { fireAuth } from '@/config/db'
+  const fb = require('@/config/db')
 
   export default {
     name: 'signup',
@@ -111,14 +110,25 @@
       saveUser: function () {
         this.sending = true
 
-        firebase.auth().createUserWithEmailAndPassword(this.form.email, this.form.passwordFirst).then(
-          (user) => {
+        fb.auth.createUserWithEmailAndPassword(this.form.email, this.form.passwordFirst).then(user => {
+          this.$store.commit('setCurrentUser', user.user)
+          fb.allUsers.doc(user.user.uid).set({
+            FirstName: this.form.firstName,
+            LastName: this.form.lastName
+          }).then(() => {
+            this.$store.dispatch('fetchUserProfile')
+            this.sending = false
             this.$router.replace('Pantry')
-          },
-          (err) => {
-            alert('nope ' + err.message)
-          }
-        )
+          }).catch(err => {
+            console.log(err)
+            this.sending = false
+            this.$v.$reset()
+          })
+        }).catch(err => {
+          console.log(err)
+          this.sending = false
+          this.$v.$reset()
+        })
       },
       validateUser () {
         this.$v.$touch()

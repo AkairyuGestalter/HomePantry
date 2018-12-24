@@ -42,7 +42,8 @@ export default {
     onChange (id) {
       this.currentTab = id
     }
-  }
+  },
+  store: this.$store
 }
 </script>
 

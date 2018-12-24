@@ -6,9 +6,8 @@ import Authentication from '@/views/Authentication.vue'
 
 /* Application */
 import Pantry from '@/views/Pantry.vue'
-import Hello from '@/components/Hello.vue'
 
-import firebase from 'firebase'
+const fb = require('@/config/db')
 
 Vue.use(VueRouter)
 
@@ -34,20 +33,13 @@ const router = new VueRouter({
       component: Pantry,
       meta: {
         requiresAuth: true
-      },
-      children: [
-        {
-          name: 'Hello',
-          path: '/',
-          component: Hello
-        }
-      ]
+      }
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
-  const currentUser = firebase.auth().currentUser
+  const currentUser = fb.auth.currentUser
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
   if (requiresAuth && !currentUser) next('Authentication')

@@ -14,7 +14,7 @@ import router from './router'
 /* eslint-disable no-unused-vars */
 import firebase from 'firebase'
 import { store } from '@/store/store'
-// import { fireAuth } from './config/db'
+const fb = require('@/config/db')
 
 Vue.use(VueMaterial)
 Vue.use(VueFire)
@@ -24,12 +24,7 @@ Vue.config.productionTip = false
 
 let app = ''
 
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    store.dispatch('setUser')
-  } else {
-    store.dispatch('setUser')
-  }
+fb.auth.onAuthStateChanged((user) => {
   if (!app) {
     app = new Vue({
       el: '#app',

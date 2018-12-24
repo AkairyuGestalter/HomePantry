@@ -6,15 +6,15 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
+import Authentication from '@/views/Authentication'
+import Pantry from '@/views/Pantry'
+
 export default {
   name: 'App',
-  methods: {
-    setUser: function () {
-      this.$store.dispatch('setUser')
-    }
-  },
-  created () {
-    this.setUser()
+  components: {Authentication, Pantry},
+  computed: {
+    ...mapState(['currentUser'])
   }
 }
 </script>

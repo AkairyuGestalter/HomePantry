@@ -1,6 +1,7 @@
 import firebase from 'firebase'
+import 'firebase/firestore'
 
-export const config = {
+const config = {
   apiKey: 'AIzaSyCvuM5jHvggHKKr7XBiO-A-jANhcHJN7_0',
   authDomain: 'homepantry-ad5ec.firebaseapp.com',
   databaseURL: 'https://homepantry-ad5ec.firebaseio.com',
@@ -8,6 +9,20 @@ export const config = {
   storageBucket: 'homepantry-ad5ec.appspot.com',
   messagingSenderId: '313226004311'
 }
-let dbconnection = firebase.initializeApp(config)
-export const fireDb = dbconnection.firestore()
-fireDb.settings({timestampsInSnapshots: true})
+
+firebase.initializeApp(config)
+const db = firebase.firestore()
+db.settings({timestampsInSnapshots: true})
+const auth = firebase.auth()
+const currentUser = auth.currentUser
+
+const allUsers = db.collection('users')
+const allHomes = db.collection('homes')
+
+export {
+  db,
+  auth,
+  currentUser,
+  allUsers,
+  allHomes
+}
