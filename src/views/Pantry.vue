@@ -26,32 +26,40 @@
         </div>
 
         <div ref="ToolBarSecondRow" class="md-toolbar-row">
-          <md-tabs v-if="dataLoaded && !changingHome" class="md-primary" :md-active-tab.sync="currentStorageTab" @md-changed="tabClick">
-            <md-tab v-for="(location, storageId) in storage" v-if="storageIds[currentHomeId].includes(storageId)" :key="storageId" :md-label="storage[storageId].Name" :id="storageId" />
-          </md-tabs>
+          <transition name="component-fade" mode="in-out">
+            <md-tabs v-if="dataLoaded && !changingHome" class="md-primary" :md-active-tab.sync="currentStorageTab" @md-changed="tabClick">
+              <md-tab v-for="(location, storageId) in storage" v-if="storageIds[currentHomeId].includes(storageId)" :key="storageId" :md-label="location.Name" :id="storageId" />
+            </md-tabs>
+          </transition>
         </div>
       </md-app-toolbar>
 
       <md-app-drawer md-permanent="full" :md-active.sync="menuVisible">
-        <md-toolbar class="md-transparent" md-elevation="0">Navigation</md-toolbar>
+        <md-toolbar class="md-transparent" md-elevation="0">
+          <span class="md-title">HomePantry</span>
+        </md-toolbar>
+
+        <md-divider class="md-inset" />
+
+        <md-subheader>Navigation</md-subheader>
 
         <md-list>
-          <md-list-item>
+          <md-list-item @click="noop">
             <md-icon>kitchen</md-icon>
             <span class="md-list-item-text">Pantry</span>
           </md-list-item>
 
-          <md-list-item>
+          <md-list-item @click="noop">
             <md-icon>fastfood</md-icon>
             <span class="md-list-item-text">Recipes</span>
           </md-list-item>
 
-          <md-list-item>
+          <md-list-item @click="noop">
             <md-icon>edit</md-icon>
             <span class="md-list-item-text">Manage Items</span>
           </md-list-item>
 
-          <md-list-item>
+          <md-list-item v-on:click="noop">
             <md-icon>error</md-icon>
             <span class="md-list-item-text">idklol</span>
           </md-list-item>
@@ -64,7 +72,7 @@
             <md-icon v-if="homeId != currentHomeId">blank</md-icon>
             <span class="md-list-item-text">{{home.Name}}</span>
           </md-list-item>
-          <md-list-item>
+          <md-list-item @click="noop">
             <md-icon>add</md-icon>
             <span class="md-list-item-text">Add a home</span>
           </md-list-item>
@@ -76,12 +84,9 @@
           <transition name="component-fade" mode="out-in">
             <storage :key="'storage-'+currentStorageId"
               v-on:edit-item="editItemDialog"
-              v-on:delete-item="handleDeleteItem"
+              v-on:delete-item="handleDeleteResponse"
             />
           </transition>
-          <md-button class="md-fab md-primary md-fab-bottom-right" @click="fabClick">
-            <md-icon>add</md-icon>
-          </md-button>
         </div>
         <div v-else>
           <transition name="component-fade" mode="out-in">
@@ -94,6 +99,9 @@
             </md-empty-state>
           </transition>
         </div>
+        <md-button class="md-fab md-primary md-fab-bottom-right" @click="fabClick" :disabled="!dataLoaded || changingHome">
+          <md-icon>add</md-icon>
+        </md-button>
         <md-dialog :md-active.sync="showItemDialog" :md-fullscreen="false">
           <edit-item
             v-on:close-dialog="showItemDialog = false"
@@ -138,7 +146,7 @@
   }
   .slide-fade-enter, .slide-fade-leave-to
   /* .slide-fade-leave-active below version 2.1.8 */ {
-    transform: translateY(1000px);
+    transform: translateY(-50px);
     opacity: 0;
   }
 
@@ -173,7 +181,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['userProfile', 'currentUser', 'storage', 'currentHomeId', 'homes', 'dataLoaded', 'currentStorageId', 'changingHome', 'storageIds'])
+    ...mapState(['storage', 'currentHomeId', 'homes', 'dataLoaded', 'currentStorageId', 'changingHome', 'storageIds'])
   },
   methods: {
     logout: function () {
@@ -184,8 +192,12 @@ export default {
         console.log(err)
       })
     },
+    noop: function () {
+      this.menuVisible = false
+    },
     click: function (obj) {
       this.$store.dispatch('changeCurrentHome', obj)
+      this.menuVisible = false
     },
     tabClick: function (obj) {
       this.currentStorageTab = obj
@@ -205,8 +217,8 @@ export default {
       this.snackbarMessage = 'Handling Edit Confirm'
       this.showSnackbar = true
     },
-    handleDeleteItem: function (deletingItem) {
-      this.snackbarMessage = 'Delete item: ' + deletingItem.ItemName
+    handleDeleteResponse: function (responseMsg) {
+      this.snackbarMessage = responseMsg
       this.showSnackbar = true
     }
   },

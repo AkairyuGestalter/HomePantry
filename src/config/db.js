@@ -18,11 +18,13 @@ const currentUser = auth.currentUser
 
 const allUsers = db.collection('users')
 const allHomes = db.collection('homes')
+const publicData = db.collection('public')
 
 export {
   db,
   auth,
   currentUser,
   allUsers,
-  allHomes
+  allHomes,
+  publicData
 }

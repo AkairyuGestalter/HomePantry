@@ -13,7 +13,7 @@
         </div>
       </md-card-header>
       <md-card-content>
-        <md-autocomplete v-model="newItemName" :md-options="selectItems" md-dense>
+        <md-autocomplete v-model="newItemName" :md-options="mergedItemNames" md-dense>
           <label>Item</label>
         </md-autocomplete>
         <md-button @click="check">check</md-button>
@@ -62,9 +62,23 @@ export default {
     }
   },
   computed: {
-    ...mapState(['currentStorageId', 'storage']),
+    ...mapState(['currentStorageId', 'storage', 'publicItems', 'homeItems']),
     currentStorageName: function () {
       return this.storage[this.currentStorageId].Name
+    },
+    mergedItemNames: function () {
+      let itemNames = []
+      Object.keys(this.homeItems).forEach(itemId => {
+        if (!(this.homeItems[itemId].ItemName in itemNames)) {
+          itemNames.push(this.homeItems[itemId].ItemName)
+        }
+      })
+      Object.keys(this.publicItems).forEach(itemId => {
+        if (!(this.publicItems[itemId].ItemName in itemNames)) {
+          itemNames.push(this.publicItems[itemId].ItemName)
+        }
+      })
+      return itemNames
     }
   },
   components: {
@@ -81,7 +95,8 @@ export default {
       this.selectItems.push(newGetItem)
     },
     check: function () {
-      console.log(this.newItemName)
+      console.log(this.publicItems)
+      console.log(this.homeItems)
     },
     noop: function () {},
     addItem: function () {

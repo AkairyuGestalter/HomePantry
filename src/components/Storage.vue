@@ -20,7 +20,7 @@
         <md-button class="md-icon-button md-list-action" @click="emitEditItem(item)">
           <md-icon>edit</md-icon>
         </md-button>
-        <md-button class="md-icon-button md-list-action" @click="confirmDeleteItem(item)">
+        <md-button class="md-icon-button md-list-action" @click="confirmDeleteItem(item, contentId)">
           <md-icon>delete</md-icon>
         </md-button>
       </md-list-item>
@@ -47,7 +47,7 @@ export default {
     return {
       deleteConfirmVisible: false,
       deleteConfirmMessage: null,
-      deletingItem: null
+      deletingItemId: null
     }
   },
   computed: {
@@ -61,15 +61,15 @@ export default {
       console.log(item)
       this.$emit('edit-item', item)
     },
-    confirmDeleteItem: function (item) {
-      this.deletingItem = item
+    confirmDeleteItem: function (item, contentId) {
+      this.deletingItemId = contentId
       this.deleteConfirmMessage = 'Are you sure you want to delete ' + item.ItemName + '?'
       this.deleteConfirmVisible = true
     },
     deleteItem: function () {
       console.log('Will delete: ')
-      console.log(this.deletingItem)
-      this.$emit('delete-item', this.deletingItem)
+      console.log(this.deletingItemId)
+      this.$emit('delete-item', 'Will delete: ' + this.storageContents[this.currentStorageId][this.deletingItemId])
     },
     cancelDelete: function () {
       this.deletingItem = null

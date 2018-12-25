@@ -6,21 +6,18 @@ Vue.use(Vuex)
 
 fb.auth.onAuthStateChanged(user => {
   if (user) {
-    // load user profile and fetch data
     store.commit('setDataLoaded', false)
     store.commit('setCurrentUser', user)
-    console.log('got user')
+
     store.dispatch('fetchUserProfile').then(() => {
-      console.log('got profile')
-      store.dispatch('fetchHomes').then(() => {
-        console.log('got homes')
-        store.dispatch('fetchStorageLocations', true).then(() => {
-          console.log('fetched storages')
-          store.dispatch('fetchAllStorageContents').then(() => {
-            console.log('fetched all contents')
-            console.log(store.state.storageContents)
-            store.commit('setDataLoaded', true)
-            console.log('set data loaded')
+      store.dispatch('fetchAllPublicData').then(() => {
+        store.dispatch('fetchHomes').then(() => {
+          store.dispatch('fetchAllHomeItems').then(() => {
+            store.dispatch('fetchStorageLocations', true).then(() => {
+              store.dispatch('fetchAllStorageContents').then(() => {
+                store.commit('setDataLoaded', true)
+              })
+            })
           })
         })
       })
@@ -38,6 +35,9 @@ export const store = new Vuex.Store({
     currentStorageId: null,
     storageContents: {},
     storageIds: {},
+    publicItems: [],
+    homeItems: [],
+    quantityTypes: {},
     dataLoaded: false,
     changingHome: false,
     allListeners: []
@@ -103,6 +103,33 @@ export const store = new Vuex.Store({
     },
     flushListeners (state) {
       state.allListeners = []
+    },
+    setOnePublicItem (state, {itemId, itemVal}) {
+      Vue.set(state.publicItems, itemId, itemVal)
+    },
+    deleteOnePublicItem (state, itemId) {
+      Vue.delete(state.publicItems, itemId)
+    },
+    setAllPublicItems (state, val) {
+      state.publicItems = val
+    },
+    setOneHomeItem (state, {itemId, itemVal}) {
+      Vue.set(state.homeItems, itemId, itemVal)
+    },
+    deleteOneHomeItem (state, itemId) {
+      Vue.delete(state.homeItems, itemId)
+    },
+    setAllHomeItems (state, val) {
+      state.homeItems = val
+    },
+    setOneQuantityType (state, {quantityId, val}) {
+      Vue.set(state.quantityTypes, quantityId, val)
+    },
+    deleteOneQuantityType (state, quantityId) {
+      Vue.delete(state.quantityTypes, quantityId)
+    },
+    setAllQuantityTypes (state, val) {
+      state.quantityTypes = val
     }
   },
   actions: {
@@ -110,6 +137,49 @@ export const store = new Vuex.Store({
       return new Promise((resolve) => {
         let newListener = fb.allUsers.doc(state.currentUser.uid).onSnapshot(res => {
           commit('setUserProfile', res.data())
+          resolve()
+        })
+        commit('addListener', newListener)
+      })
+    },
+    fetchAllPublicData ({dispatch}) {
+      return new Promise((resolve) => {
+        let promises = []
+        promises.push(dispatch('fetchQuantities'))
+        promises.push(dispatch('fetchPublicItems'))
+
+        resolve(Promise.all(promises))
+      })
+    },
+    fetchQuantities ({commit}) {
+      return new Promise((resolve) => {
+        console.log('fetchQuantities')
+        let newListener = fb.publicData.doc('Configuration').collection('Quantities').onSnapshot(qtySnapshot => {
+          qtySnapshot.docChanges().forEach(qtyChange => {
+            const quantityId = qtyChange.doc.id
+            if (qtyChange.type === 'removed') {
+              commit('deleteOneQuantityType', quantityId)
+            } else {
+              commit('setOneQuantityType', {quantityId, val: qtyChange.doc.data()})
+            }
+          })
+          resolve()
+        })
+        commit('addListener', newListener)
+      })
+    },
+    fetchPublicItems ({commit}) {
+      return new Promise((resolve) => {
+        console.log('fetchPublicItems')
+        let newListener = fb.publicData.doc('UserData').collection('Items').onSnapshot(userItemSnapshot => {
+          userItemSnapshot.docChanges().forEach(userItemChange => {
+            const itemId = userItemChange.doc.id
+            if (userItemChange.type === 'remove') {
+              commit('deleteOnePublicItem', itemId)
+            } else {
+              commit('setOnePublicItem', {itemId, itemVal: userItemChange.doc.data()})
+            }
+          })
           resolve()
         })
         commit('addListener', newListener)
@@ -132,6 +202,32 @@ export const store = new Vuex.Store({
             }
           })
           commit('setCurrentHome', currentHomeId)
+          resolve()
+        })
+        commit('addListener', newListener)
+      })
+    },
+    fetchAllHomeItems ({dispatch, state}) {
+      return new Promise((resolve) => {
+        let homeItemPromises = []
+        Object.keys(state.homes).forEach(homeId => {
+          homeItemPromises.push(dispatch('fetchOneHomeItems', homeId))
+        })
+        resolve(Promise.all(homeItemPromises))
+      })
+    },
+    fetchOneHomeItems ({commit}, homeId) {
+      return new Promise((resolve) => {
+        console.log('fetchOneHomeItems: ' + homeId)
+        let newListener = fb.allHomes.doc(homeId).collection('Items').onSnapshot(homeItemSnapshot => {
+          homeItemSnapshot.docChanges().forEach(homeItemChange => {
+            let itemId = homeItemChange.doc.id
+            if (homeItemChange.type === 'removed') {
+              commit('deleteOneHomeItem', itemId)
+            } else {
+              commit('setOneHomeItem', {itemId, itemVal: homeItemChange.doc.data()})
+            }
+          })
           resolve()
         })
         commit('addListener', newListener)
@@ -207,6 +303,9 @@ export const store = new Vuex.Store({
       commit('setAllHomes', {})
       commit('setAllStorages', {})
       commit('setAllContents', {})
+      commit('setAllPublicItems', {})
+      commit('setAllQuantities', {})
+      commit('setAllHomeItems', {})
       commit('setDataLoaded', false)
       commit('clearStorageIds')
       state.allListeners.forEach(listener => {
