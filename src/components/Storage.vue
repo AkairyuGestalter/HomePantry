@@ -14,10 +14,10 @@
         <md-icon>fastfood</md-icon>
         </md-avatar>
         <div class="md-list-item-text" style="text-align: left">
-          <span class="md-title">{{item.ItemName}}</span>
-          <span>{{item.ItemQty}} {{item.QtyType}}</span>
+          <span class="md-title">{{item.ItemId}}</span>
+          <span>{{item.ItemQty}} {{item.ItemQty != 1 ? quantityTypes[item.QtyTypeId].plural : quantityTypes[item.QtyTypeId].single}}</span>
         </div>
-        <md-button class="md-icon-button md-list-action" @click="emitEditItem(item)">
+        <md-button class="md-icon-button md-list-action" @click="emitEditItem(item, contentId)">
           <md-icon>edit</md-icon>
         </md-button>
         <md-button class="md-icon-button md-list-action" @click="confirmDeleteItem(item, contentId)">
@@ -40,6 +40,7 @@
 
 <script>
 import { mapState } from 'vuex'
+const fb = require('@/config/db')
 
 export default {
   name: 'Storage',
@@ -47,29 +48,32 @@ export default {
     return {
       deleteConfirmVisible: false,
       deleteConfirmMessage: null,
-      deletingItemId: null
+      deletingContentId: null
     }
   },
   computed: {
-    ...mapState(['currentStorageId', 'storageContents'])
+    ...mapState(['currentStorageId', 'storageContents', 'quantityTypes', 'currentHomeId'])
   },
   methods: {
     check: function () {
       console.log(this.currentStorageId)
     },
-    emitEditItem: function (item) {
+    emitEditItem: function (item, contentId) {
       console.log(item)
-      this.$emit('edit-item', item)
+      this.$emit('edit-item', item, contentId)
     },
     confirmDeleteItem: function (item, contentId) {
-      this.deletingItemId = contentId
+      this.deletingContentId = contentId
       this.deleteConfirmMessage = 'Are you sure you want to delete ' + item.ItemName + '?'
       this.deleteConfirmVisible = true
     },
     deleteItem: function () {
       console.log('Will delete: ')
-      console.log(this.deletingItemId)
-      this.$emit('delete-item', 'Will delete: ' + this.storageContents[this.currentStorageId][this.deletingItemId])
+      console.log(this.deletingContentId)
+      const itemName = this.storageContents[this.currentStorageId][this.deletingContentId].ItemName
+      fb.allHomes.doc(this.currentHomeId).collection('StorageLocations').doc(this.currentStorageId).collection('Contents').doc(this.deletingContentId).delete().then(() => {
+        this.$emit('delete-item', 'Deleted: ' + itemName)
+      })
     },
     cancelDelete: function () {
       this.deletingItem = null

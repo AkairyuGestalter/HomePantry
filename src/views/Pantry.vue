@@ -107,7 +107,8 @@
             v-on:close-dialog="showItemDialog = false"
             v-on:confirm-dialog="handleConfirmEdit"
             :mode="editMode"
-            :item="editItem" />
+            :item="editingItem"
+            :contentId="editingContentId" />
         </md-dialog>
         <!--md-bottom-bar>
           <md-bottom-bar-item><md-icon>home</md-icon></md-bottom-bar-item>
@@ -175,7 +176,8 @@ export default {
       currentStorageTab: null,
       showItemDialog: false,
       editMode: null,
-      editItem: null,
+      editingItem: null,
+      editingContentId: null,
       showSnackbar: false,
       snackbarMessage: null
     }
@@ -204,12 +206,15 @@ export default {
     },
     fabClick: function () {
       this.editMode = 'addcontent'
-      this.editItem = {}
+      this.editingItem = {}
+      this.editingContentId = null
       this.showItemDialog = true
     },
-    editItemDialog: function (itemDef) {
+    editItemDialog: function (itemDef, contentId) {
+      console.log('editItemDialog: contentId: ' + contentId)
       this.editMode = 'editcontent'
-      this.editItem = 'itemDef'
+      this.editingItem = itemDef
+      this.editingContentId = contentId
       this.showItemDialog = true
     },
     handleConfirmEdit: function () {
