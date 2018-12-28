@@ -40,7 +40,8 @@ export const store = new Vuex.Store({
     quantityTypes: {},
     dataLoaded: false,
     changingHome: false,
-    allListeners: []
+    allListeners: [],
+    useDarkMode: true
   },
   mutations: {
     setCurrentUser (state, val) {
@@ -130,6 +131,9 @@ export const store = new Vuex.Store({
     },
     setAllQuantityTypes (state, val) {
       state.quantityTypes = val
+    },
+    setDarkMode (state, val) {
+      state.useDarkMode = val
     }
   },
   actions: {
@@ -304,7 +308,7 @@ export const store = new Vuex.Store({
       commit('setAllStorages', {})
       commit('setAllContents', {})
       commit('setAllPublicItems', {})
-      commit('setAllQuantities', {})
+      commit('setAllQuantityTypes', {})
       commit('setAllHomeItems', {})
       commit('setDataLoaded', false)
       commit('clearStorageIds')

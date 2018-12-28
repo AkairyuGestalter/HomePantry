@@ -3,9 +3,12 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import VueMaterial from 'vue-material'
-import 'vue-material/dist/vue-material.min.css'
-import 'vue-material/dist/theme/default-dark.css'
+// import VueMaterial from 'vue-material'
+// import 'vue-material/dist/vue-material.min.css'
+// import 'vue-material/dist/theme/default-dark.css'
+
+import Vuetify from 'vuetify'
+import 'vuetify/dist/vuetify.min.css'
 
 import VueFire from 'vuefire'
 import App from './App'
@@ -16,7 +19,8 @@ import firebase from 'firebase'
 import { store } from '@/store/store'
 const fb = require('@/config/db')
 
-Vue.use(VueMaterial)
+Vue.use(Vuetify)
+// Vue.use(VueMaterial)
 Vue.use(VueFire)
 Vue.use(VueRouter)
 Vue.use(firebase)

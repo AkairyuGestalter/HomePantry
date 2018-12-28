@@ -1,54 +1,75 @@
 <template>
-  <div class="authentication">
-    <md-app md-waterfall md-mode="fixed">
-      <md-app-toolbar class="md-primary md-dense">
-        <div class="md-toolbar-row">
-          <span class="md-title">Home Pantry</span>
-        </div>
-        <div class="md-toolbar-row">
-          <md-tabs class="md-primary" @md-changed="onChange">
-            <md-tab md-label="Log In" id="tab-login" />
-            <md-tab md-label="Sign Up" id="tab-signup" />
-          </md-tabs>
-        </div>
-      </md-app-toolbar>
-      <md-app-content>
-        <md-content v-if="this.currentTab === 'tab-login'">
-          <login />
-        </md-content>
-        <md-content v-if="this.currentTab === 'tab-signup'">
+  <div>
+    <v-toolbar app color="primary" tabs>
+      <v-toolbar-title>Home Pantry</v-toolbar-title>
+      <v-spacer />
+      <v-menu>
+        <v-btn icon slot="activator">
+          <v-icon>more_vert</v-icon>
+        </v-btn>
+        <v-list>
+          <v-list-tile>
+            <v-list-tile-action>
+              <v-switch label="Use dark mode?" v-model="isDarkMode" />
+            </v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+      </v-menu>
+      <v-tabs v-model="currentTab" slot="extension" color="transparent">
+        <v-tab key="login">Log In</v-tab>
+        <v-tab key="signup">Sign Up</v-tab>
+      </v-tabs>
+    </v-toolbar>
+    <v-content app>
+      <v-tabs-items v-model="currentTab">
+        <v-tab-item key="login">
+          <login @login-error="handleLoginError" />
+        </v-tab-item>
+        <v-tab-item key="signup">
           <sign-up />
-        </md-content>
-      </md-app-content>
-    </md-app>
+        </v-tab-item>
+      </v-tabs-items>
+      <v-snackbar bottom :timeout="5000" v-model="showSnackbar">
+        {{snackbarMessage}}
+      </v-snackbar>
+    </v-content>
   </div>
 </template>
 
 <script>
-/* eslint-disable no-unused-vars */
+import {mapState} from 'vuex'
 import Login from '@/components/Login'
 import SignUp from '@/components/SignUp'
 
 export default {
   name: 'authentication',
   data: () => ({
-    currentTab: 'tab-login'
+    currentTab: null,
+    showSnackbar: false,
+    snackbarMessage: null,
+    isDarkMode: true
   }),
+  methods: {
+    handleLoginError: function () {
+      this.snackbarMessage = 'Login failed. Email address or password is incorrect.'
+      this.showSnackbar = true
+    }
+  },
   components: {
     Login,
     SignUp
   },
-  methods: {
-    onChange (id) {
-      this.currentTab = id
+  computed: {
+    ...mapState(['useDarkMode'])
+  },
+  watch: {
+    isDarkMode: function () {
+      this.$store.commit('setDarkMode', this.isDarkMode)
     }
+  },
+  mounted () {
+    this.isDarkMode = this.useDarkMode
   },
   store: this.$store
 }
 </script>
-
-<style lang="scss" scoped>
-  .md-app {
-   min-height: 100vh !important;
-  }
-</style>

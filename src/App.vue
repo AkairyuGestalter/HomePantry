@@ -1,9 +1,16 @@
 <template>
   <div id="app">
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,500,700,400italic|Material+Icons">
-    <router-view/>
+    <v-app :dark='useDarkMode'>
+      <router-view/>
+    </v-app>
   </div>
 </template>
+
+<style>
+ * {
+   text-decoration: none !important
+ }
+</style>
 
 <script>
 import { mapState } from 'vuex'
@@ -14,7 +21,7 @@ export default {
   name: 'App',
   components: {Authentication, Pantry},
   computed: {
-    ...mapState(['currentUser'])
+    ...mapState(['currentUser', 'useDarkMode'])
   }
 }
 </script>

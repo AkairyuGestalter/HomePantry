@@ -1,58 +1,51 @@
-// EditItem.vue
-
 <template>
-  <form @submit.stop.prevent="noop()">
-    <md-card>
-      <md-card-header>
-        <div class="md-title">
-          <span v-if="mode === 'newdef'">Create New Item</span>
-          <span v-else-if="mode === 'editdef'">Edit Item Definition</span>
-          <span v-else-if="mode === 'addcontent'">Add Item</span>
-          <span v-else-if="mode === 'editcontent'">Update {{item.ItemName}}</span>
-          <span v-else>Unknown operating mode</span>
-        </div>
-      </md-card-header>
-      <md-card-content>
-        <md-autocomplete v-model="newItem" :md-options="allItemsArray" md-dense>
-          <label>Item</label>
-          <template slot="md-autocomplete-item" slot-scope="{item, term}">
-            <md-highlight-text :md-term="term">{{item.name}}</md-highlight-text>
-          </template>
-          <template slot="md-autocomplete-empty" slot-scope="{term}">
-          </template>
-        </md-autocomplete>
-        <md-field>
-          <label>Quantity</label>
-          <md-input type="number" v-model="newItemQuantity" />
-        </md-field>
-        <md-field>
-          <label for="qtytype">Type</label>
-          <md-select v-model="newItemQuantityId" name="qtytype" id="qtytype">
-            <md-option v-for="(quantityType, quantityId) in quantityTypes" :key="quantityId" :id="quantityId" :value="quantityId">
-              {{newItemQuantity != 1 ? quantityType.plural : quantityType.single}}
-            </md-option>
-          </md-select>
-        </md-field>
-        <md-button @click="check">check</md-button>
-      </md-card-content>
-      <md-card-actions>
-        <md-button :disabled="sending" @click="$emit('close-dialog')">Cancel</md-button>
-        <md-button class="md-primary" :disabled="sending" @click="addItem">Accept</md-button>
-      </md-card-actions>
-    </md-card>
-  </form>
+  <v-card>
+    <v-card-title primary-title>
+      <h3 class="headline mb-0">
+        <span v-if="mode === 'newdef'">Create New Item</span>
+        <span v-else-if="mode === 'editdef'">Edit Item Definition</span>
+        <span v-else-if="mode === 'addcontent'">Add Item</span>
+        <span v-else-if="mode === 'editcontent'">Update {{item.ItemName}}</span>
+        <span v-else>Unknown operating mode</span>
+      </h3>
+    </v-card-title>
+    <v-card-text>
+      <v-combobox
+        v-model="newItem"
+        hint="Enter an item's name"
+        label="Item"
+        :items="allItemsAsArray"
+        item-value="id"
+        item-text="name"
+        hide-no-data
+        :disabled="sending"
+      />
+      <v-text-field :disabled="sending"
+        label="Quantity"
+        type="number"
+        v-model="newItemQuantity"
+      />
+      <v-autocomplete
+        v-model="newItemQuantityId"
+        hint="Select a quantity type"
+        label="Type"
+        :items="quantityTypesAsArray"
+        item-value="id"
+        item-text="name"
+        hide-no-data
+        :disabled="sending"
+      />
+      <v-switch v-if="checkMakePublic" label="Make item public?" v-model="makePublic" />
+      <v-progress-linear :indeterminate="true" v-show="sending" />
+    </v-card-text>
+    <v-card-actions>
+      <v-btn :disabled="sending" color="info" @click="check">Check</v-btn>
+      <v-spacer />
+      <v-btn :disabled="sending" @click="$emit('close-dialog')">Cancel</v-btn>
+      <v-btn color="primary" :disabled="sending" @click="addItem">Accept</v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
-
-<style>
-  .md-card {
-    flex: 1;
-    height: 100%
-  }
-  .md-menu-content {
-   z-index:11;
-  }
-</style>
-
 
 <script>
 import {mapState} from 'vuex'
@@ -66,7 +59,7 @@ export default {
     newItemQuantityId: null,
     storageId: null,
     items: [],
-    newItemId: null
+    makePublic: false
   }),
   props: {
     mode: null,
@@ -78,43 +71,53 @@ export default {
     currentStorageName: function () {
       return this.storage[this.currentStorageId].Name
     },
-    allItemsArray: function () {
+    allItems: function () {
+      return {
+        ...this.publicItems,
+        ...this.homeItems
+      }
+    },
+    allItemsAsArray: function () {
       let items = []
       let itemId
-      for (itemId in this.publicItems) {
-        items.push({id: itemId, name: this.publicItems[itemId].ItemName})
+      for (itemId in this.allItems) {
+        items.push({id: itemId, name: this.allItems[itemId].ItemName})
       }
-      for (itemId in this.homeItems) {
-        items.push({id: itemId, name: this.homeItems[itemId].ItemName})
-      }
-      return items.map(i => ({
-        ...i,
-        'toLowerCase': () => i.name.toLowerCase(),
-        'toString': () => i.name.toString()
-      }))
+      return items
     },
-    allItemIdsArray: function () {
-      let itemIds = []
-      let itemId
-      for (itemId in this.publicItems) {
-        itemIds.push(itemId)
+    quantityTypesAsArray: function () {
+      let qtyTypesArr = []
+      let quantityId
+      for (quantityId in this.quantityTypes) {
+        qtyTypesArr.push({id: quantityId, name: this.quantityTypes[quantityId].indeterminate})
       }
-      for (itemId in this.homeItems) {
-        itemIds.push(itemId)
+      return qtyTypesArr
+    },
+    checkMakePublic: function () {
+      if (this.newItem) {
+        if (!this.newItem.id) {
+          return true
+        }
       }
-      return itemIds
+      return false
     }
   },
-  mounted: function () {
-    if (this.contentId) {
-      this.newItem = {
-        id: this.item.ItemId ? this.item.ItemId : '',
-        name: this.item.ItemName ? this.item.ItemName : '',
-        'toLowerCase': () => this.newItem.name.toLowerCase(),
-        'toString': () => this.newItem.name.toString()
+  watch: {
+    contentId: function () {
+      console.log('EditItem@watch@contentId: contentId' + this.contentId)
+      console.log(this.item)
+      if (this.contentId) {
+        this.newItem = {
+          id: this.item.ItemId ? this.item.ItemId : '',
+          name: this.item.ItemId ? this.allItems[this.item.ItemId].ItemName : ''
+        }
+        this.newItemQuantity = this.item.ItemQty
+        this.newItemQuantityId = this.item.QtyTypeId
+      } else {
+        this.newItem = null
+        this.newItemQuantity = null
+        this.newItemQuantityId = null
       }
-      this.newItemQuantity = this.item.ItemQty
-      this.newItemQuantityId = this.item.QtyTypeId
     }
   },
   components: {
@@ -122,25 +125,45 @@ export default {
   },
   methods: {
     check: function () {
-      console.log('contentID: ' + this.contentId)
-      console.log(this.newItem.id)
+      console.log(this.contentId)
+      console.log(this.newItem)
       console.log(this.newItemQuantity)
       console.log(this.newItemQuantityId)
     },
+    logChange: function () {
+      console.log('change')
+    },
     noop: function () {},
     addItem: async function () {
-      const itemData = {
+      this.sending = true
+      const contentData = {
         ItemId: this.newItem.id,
         ItemQty: this.newItemQuantity,
         QtyTypeId: this.newItemQuantityId
       }
-      console.log(itemData)
-      let colRef = fb.allHomes.doc(this.currentHomeId).collection('StorageLocations').doc(this.currentStorageId).collection('Contents')
-      if (this.contentId) {
-        await colRef.doc(this.contentId).set(itemData)
-      } else {
-        await colRef.add(itemData)
+      if (!contentData.ItemId) {
+        let itemDocRef
+        if (this.makePublic) {
+          itemDocRef = await fb.publicData.doc('UserData').collection('Items').doc()
+        } else {
+          itemDocRef = await fb.allHomes.doc(this.currentHomeId).collection('Items').doc()
+        }
+        let itemData = {
+          ItemName: this.newItem,
+          QtyTypeId: contentData.QtyTypeId
+        }
+        console.log(itemData)
+        await itemDocRef.set(itemData)
+        contentData.ItemId = itemDocRef.id
       }
+      console.log(contentData)
+      let colRef = fb.allHomes.doc(this.currentHomeId).collection('StorageLocations').doc(this.currentStorageId).collection('Contents') // eslint-disable-line
+      if (this.contentId) {
+        await colRef.doc(this.contentId).set(contentData, {merge: true})
+      } else {
+        await colRef.add(contentData)
+      }
+      this.sending = false
       this.$emit('confirm-dialog')
     },
     isNewItemDef: function () {
